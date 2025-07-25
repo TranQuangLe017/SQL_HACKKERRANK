@@ -1,0 +1,56 @@
+SELECT
+    h.hacker_id,
+    h.name
+FROM Hackers      AS h
+JOIN Submissions  AS s ON h.hacker_id = s.hacker_id
+JOIN Challenges   AS c ON s.challenge_id = c.challenge_id
+JOIN Difficulty   AS d ON c.difficulty_level = d.difficulty_level
+WHERE s.score = d.score                      
+GROUP BY h.hacker_id, h.name
+HAVING COUNT(DISTINCT s.challenge_id) > 1   
+ORDER BY COUNT(DISTINCT s.challenge_id) DESC,
+         h.hacker_id ASC;
+-- Order by thì ưu tiên theo thứ tự để order by 
+
+-- Câu 2
+SELECT 
+    CASE WHEN g.Grade < 8 THEN 'NULL' ELSE s.Name END AS Name,
+    g.Grade,
+    s.Marks
+FROM Students s
+JOIN Grades g
+    ON s.Marks BETWEEN g.Min_Mark AND g.Max_Mark
+ORDER BY 
+    g.Grade DESC,
+    CASE WHEN g.Grade >= 8 THEN s.Name END ASC,
+    CASE WHEN g.Grade < 8 THEN s.Marks END ASC;
+-- Case When - Else - End, có thể join các số tạo dựa trên cột min max của cùng 1 giá trị , order by có thể viết CASE WHEN 
+
+
+-- Câu 3
+SELECT h.hacker_id,
+       h.name,
+       COUNT(c.challenge_id) AS total_challenges
+FROM Hackers h
+JOIN Challenges c
+  ON h.hacker_id = c.hacker_id
+GROUP BY h.hacker_id, h.name
+HAVING COUNT(c.challenge_id) = (
+    SELECT MAX(ch_count)
+    FROM (
+        SELECT COUNT(challenge_id) AS ch_count
+        FROM Challenges
+        GROUP BY hacker_id
+    ) AS sub
+)
+OR COUNT(c.challenge_id) IN (
+    SELECT ch_count
+    FROM (
+        SELECT COUNT(challenge_id) AS ch_count
+        FROM Challenges
+        GROUP BY hacker_id
+    ) AS sub2
+    GROUP BY ch_count
+    HAVING COUNT(*) = 1
+)
+ORDER BY total_challenges DESC, h.hacker_id;
